@@ -10,6 +10,7 @@
 #include "streaming/session.h"
 #include "streaming/streamutils.h"
 #include "path.h"
+#include "diagnostics/performancecounters.h"
 
 #import <Cocoa/Cocoa.h>
 #import <VideoToolbox/VideoToolbox.h>
@@ -476,6 +477,7 @@ public:
     // Caller frees frame after we return
     virtual void renderFrameIntoDrawable(AVFrame* frame, id<CAMetalDrawable> drawable)
     { @autoreleasepool {
+        const uint64_t encodeStartedUs = LiGetMicroseconds();
         std::array<CVMetalTextureRef, MAX_VIDEO_PLANES> cvMetalTextures;
         size_t planes = getFramePlaneCount(frame);
         SDL_assert(planes <= MAX_VIDEO_PLANES);
@@ -563,13 +565,22 @@ public:
         }
 
         [renderEncoder endEncoding];
+        PerformanceCounters::instance().record(PerformanceCounters::Metric::RenderEncode,
+                                               LiGetMicroseconds() - encodeStartedUs);
 
         // Flip to the newly rendered buffer
+        const uint64_t presentStartedUs = LiGetMicroseconds();
         [commandBuffer presentDrawable:drawable];
         [commandBuffer commit];
 
         // Wait for the command buffer to complete and free our CVMetalTextureCache references
         [commandBuffer waitUntilCompleted];
+        if (commandBuffer.GPUEndTime >= commandBuffer.GPUStartTime) {
+            PerformanceCounters::instance().record(PerformanceCounters::Metric::GpuCompletion,
+                static_cast<uint64_t>((commandBuffer.GPUEndTime - commandBuffer.GPUStartTime) * 1000000));
+        }
+        PerformanceCounters::instance().record(PerformanceCounters::Metric::Present,
+                                               LiGetMicroseconds() - presentStartedUs);
     }}
 
     // Caller frees frame after we return

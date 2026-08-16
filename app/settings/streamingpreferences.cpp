@@ -1,4 +1,5 @@
 #include "streamingpreferences.h"
+#include "streaming/streamlogic.h"
 #include "utils.h"
 
 #include <QSettings>
@@ -173,26 +174,19 @@ void StreamingPreferences::reload()
                                                     static_cast<int>(Language::LANG_AUTO)).toInt());
 
 
-    // Perform default settings updates as required based on last default version
-    if (defaultVer < 1) {
+    const auto migrated = StreamLogic::migrateSettings(defaultVer,
 #ifdef Q_OS_DARWIN
-        // Update window mode setting on macOS from full-screen (old default) to borderless windowed (new default)
-        if (windowMode == WindowMode::WM_FULLSCREEN) {
-            windowMode = WindowMode::WM_FULLSCREEN_DESKTOP;
-        }
+                                                        true,
+#else
+                                                        false,
 #endif
-    }
-    if (defaultVer < 2) {
-        if (windowMode == WindowMode::WM_FULLSCREEN && WMUtils::isRunningWayland()) {
-            windowMode = WindowMode::WM_FULLSCREEN_DESKTOP;
-        }
-    }
-
-    // Fixup VCC value to the new settings format with codec and HDR separate
-    if (videoCodecConfig == VCC_FORCE_HEVC_HDR_DEPRECATED) {
-        videoCodecConfig = VCC_AUTO;
-        enableHdr = true;
-    }
+                                                        WMUtils::isRunningWayland(),
+                                                        {static_cast<int>(windowMode),
+                                                         static_cast<int>(videoCodecConfig),
+                                                         enableHdr});
+    windowMode = static_cast<WindowMode>(migrated.windowMode);
+    videoCodecConfig = static_cast<VideoCodecConfig>(migrated.videoCodec);
+    enableHdr = migrated.hdrEnabled;
 }
 
 bool StreamingPreferences::retranslate()
@@ -366,56 +360,5 @@ void StreamingPreferences::save()
 
 int StreamingPreferences::getDefaultBitrate(int width, int height, int fps, bool yuv444)
 {
-    // Don't scale bitrate linearly beyond 60 FPS. It's definitely not a linear
-    // bitrate increase for frame rate once we get to values that high.
-    float frameRateFactor = (fps <= 60 ? fps : (qSqrt(fps / 60.f) * 60.f)) / 30.f;
-
-    // TODO: Collect some empirical data to see if these defaults make sense.
-    // We're just using the values that the Shield used, as we have for years.
-    static const struct resTable {
-        int pixels;
-        int factor;
-    } resTable[] {
-        { 640 * 360, 1 },
-        { 854 * 480, 2 },
-        { 1280 * 720, 5 },
-        { 1920 * 1080, 10 },
-        { 2560 * 1440, 20 },
-        { 3840 * 2160, 40 },
-        { -1, -1 },
-    };
-
-    // Calculate the resolution factor by linear interpolation of the resolution table
-    float resolutionFactor;
-    int pixels = width * height;
-    for (int i = 0;; i++) {
-        if (pixels == resTable[i].pixels) {
-            // We can bail immediately for exact matches
-            resolutionFactor = resTable[i].factor;
-            break;
-        }
-        else if (pixels < resTable[i].pixels) {
-            if (i == 0) {
-                // Never go below the lowest resolution entry
-                resolutionFactor = resTable[i].factor;
-            }
-            else {
-                // Interpolate between the entry greater than the chosen resolution (i) and the entry less than the chosen resolution (i-1)
-                resolutionFactor = ((float)(pixels - resTable[i-1].pixels) / (resTable[i].pixels - resTable[i-1].pixels)) * (resTable[i].factor - resTable[i-1].factor) + resTable[i-1].factor;
-            }
-            break;
-        }
-        else if (resTable[i].pixels == -1) {
-            // Never go above the highest resolution entry
-            resolutionFactor = resTable[i-1].factor;
-            break;
-        }
-    }
-
-    if (yuv444) {
-        // This is rough estimation based on the fact that 4:4:4 doubles the amount of raw YUV data compared to 4:2:0
-        resolutionFactor *= 2;
-    }
-
-    return qRound(resolutionFactor * frameRateFactor) * 1000;
+    return StreamLogic::defaultBitrateKbps(width, height, fps, yuv444);
 }

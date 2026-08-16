@@ -3,6 +3,7 @@
 #include <Limelight.h>
 #include "SDL_compat.h"
 #include "settings/mappingmanager.h"
+#include "diagnostics/performancecounters.h"
 
 #include <QtMath>
 
@@ -190,6 +191,7 @@ Uint32 SdlInputHandler::mouseEmulationTimerCallback(Uint32 interval, void *param
 
 void SdlInputHandler::handleControllerAxisEvent(SDL_ControllerAxisEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
     SDL_JoystickID gameControllerId = event->which;
     GamepadState* state = findStateForGamepad(gameControllerId);
     if (state == NULL) {
@@ -254,6 +256,7 @@ void SdlInputHandler::handleControllerAxisEvent(SDL_ControllerAxisEvent* event)
 
 void SdlInputHandler::handleControllerButtonEvent(SDL_ControllerButtonEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
     if (event->button >= SDL_arraysize(k_ButtonMap)) {
         SDL_LogWarn(SDL_LOG_CATEGORY_APPLICATION,
                     "No mapping for gamepad button: %u",
@@ -440,6 +443,7 @@ void SdlInputHandler::handleControllerSensorEvent(SDL_ControllerSensorEvent* eve
 
 void SdlInputHandler::handleControllerTouchpadEvent(SDL_ControllerTouchpadEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
     GamepadState* state = findStateForGamepad(event->which);
     if (state == NULL) {
         return;

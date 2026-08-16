@@ -2,6 +2,7 @@
 
 #include <Limelight.h>
 #include "SDL_compat.h"
+#include "diagnostics/performancecounters.h"
 
 #define VK_0 0x30
 #define VK_A 0x41
@@ -175,6 +176,7 @@ void SdlInputHandler::performSpecialKeyCombo(KeyCombo combo)
 
 void SdlInputHandler::handleKeyEvent(SDL_KeyboardEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
     short keyCode;
     char modifiers;
     bool shouldNotConvertToScanCodeOnServer = false;

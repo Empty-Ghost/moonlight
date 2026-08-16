@@ -1,6 +1,9 @@
 QT += core quick network quickcontrols2 svg
 CONFIG += c++17
 
+GIT_COMMIT = $$system(git -C $$PWD/.. rev-parse --short=12 HEAD)
+DEFINES += APP_COMMIT=\\\"$$GIT_COMMIT\\\" DEPENDENCY_BUNDLE=\\\"v12\\\"
+
 unix:!macx {
     TARGET = moonlight
 } else {
@@ -166,6 +169,8 @@ macx {
 }
 
 SOURCES += \
+    diagnostics/crashcontext.cpp \
+    diagnostics/performancecounters.cpp \
     backend/nvaddress.cpp \
     backend/nvapp.cpp \
     cli/pair.cpp \
@@ -190,13 +195,16 @@ SOURCES += \
     streaming/input/input.cpp \
     streaming/input/keyboard.cpp \
     streaming/input/mouse.cpp \
+    streaming/input/inputtrace.cpp \
     streaming/input/reltouch.cpp \
     streaming/session.cpp \
     streaming/audio/audio.cpp \
+    streaming/audio/audioqueuepolicy.cpp \
     streaming/audio/renderers/sdlaud.cpp \
     gui/computermodel.cpp \
     gui/appmodel.cpp \
     streaming/bandwidth.cpp \
+    streaming/streamlogic.cpp \
     streaming/streamutils.cpp \
     backend/autoupdatechecker.cpp \
     path.cpp \
@@ -207,6 +215,8 @@ SOURCES += \
     wm.cpp
 
 HEADERS += \
+    diagnostics/crashcontext.h \
+    diagnostics/performancecounters.h \
     SDL_compat.h \
     backend/nvaddress.h \
     backend/nvapp.h \
@@ -228,13 +238,18 @@ HEADERS += \
     cli/startstream.h \
     settings/streamingpreferences.h \
     streaming/input/input.h \
+    streaming/input/inputtrace.h \
     streaming/session.h \
     streaming/audio/renderers/renderer.h \
+    streaming/audio/audioqueuepolicy.h \
     streaming/audio/renderers/sdl.h \
     gui/computermodel.h \
     gui/appmodel.h \
     streaming/video/decoder.h \
+    streaming/video/colorlogic.h \
+    streaming/video/framecontract.h \
     streaming/bandwidth.h \
+    streaming/streamlogic.h \
     streaming/streamutils.h \
     backend/autoupdatechecker.h \
     path.h \

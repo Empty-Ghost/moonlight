@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-15T23:38:00-05:00",
+  "app": {
+    "commit": "256022d3d62175da0f9b263ed152851cdadc8eac",
+    "version": "6.1.0",
+    "dependency_bundle": "v12",
+    "dependency_bundle_sha256": "446228fb68d5aef4bb8791f08e5e98e38e6ecffdefac7633902fc463189a0f3c"
+  },
+  "machine": {
+    "model": "Mac16,12",
+    "chip": "Apple M4",
+    "architecture": "arm64",
+    "memory_bytes": 17179869184,
+    "cpu_count": 10,
+    "gpu_core_count": 10,
+    "display": "Built-in 2560x1664 Retina"
+  },
+  "environment": {
+    "macos": "26.6.1 (25G76)",
+    "xcode": "26.6 (17F113)",
+    "sdk": "macOS 26.5",
+    "clang": "Apple clang 21.0.0 (clang-2100.1.1.101)",
+    "qt": "6.11.1 official clang_64 universal package",
+    "power_source": "battery, 95% at capture start",
+    "thermal_state": "nominal (no thermal or performance warning)",
+    "network": null,
+    "sunshine_host": null
+  },
+  "builds": [
+    {
+      "configuration": "arm64-debug",
+      "architectures": ["arm64"],
+      "result": "pass",
+      "deployment_target": "14.0",
+      "qt_distribution": "Homebrew arm64",
+      "flags": ["-g", "-std=gnu++17", "-arch arm64"]
+    },
+    {
+      "configuration": "arm64-release",
+      "architectures": ["arm64"],
+      "result": "pass",
+      "deployment_target": "14.0",
+      "qt_distribution": "Homebrew arm64",
+      "flags": ["-O2", "-g", "-DNDEBUG", "-std=gnu++17", "-arch arm64"]
+    },
+    {
+      "configuration": "universal-release",
+      "architectures": ["x86_64", "arm64"],
+      "result": "pass",
+      "deployment_target": "13.0",
+      "qt_distribution": "official clang_64 universal",
+      "flags": ["-O2", "-g", "-DNDEBUG", "-std=gnu++17", "-arch x86_64", "-arch arm64"]
+    }
+  ],
+  "runs": [
+    {
+      "id": "idle-1",
+      "kind": "idle",
+      "duration_seconds": 30,
+      "scenario": {"warmup_seconds": 10, "ui": "computer list", "sample_interval_seconds": 1},
+      "metrics": {
+        "startup_to_ready_ms": null,
+        "cpu_percent_mean": 0.710,
+        "resident_memory_bytes_mean": 155657830,
+        "resident_memory_bytes_peak": 156106752,
+        "thermal_state": "nominal",
+        "decode_ms": null,
+        "render_cpu_ms": null,
+        "gpu_completion_ms": null,
+        "present_delay_ms": null,
+        "input_event_to_send_ms": null,
+        "audio_queue_ms": null,
+        "network_jitter_ms": null,
+        "packet_loss_percent": null,
+        "dropped_frames": null,
+        "audio_underruns": null
+      }
+    },
+    {
+      "id": "idle-2",
+      "kind": "idle",
+      "duration_seconds": 30,
+      "scenario": {"warmup_seconds": 10, "ui": "computer list", "sample_interval_seconds": 1},
+      "metrics": {
+        "startup_to_ready_ms": null,
+        "cpu_percent_mean": 0.637,
+        "resident_memory_bytes_mean": 155428454,
+        "resident_memory_bytes_peak": 155795456,
+        "thermal_state": "nominal",
+        "decode_ms": null,
+        "render_cpu_ms": null,
+        "gpu_completion_ms": null,
+        "present_delay_ms": null,
+        "input_event_to_send_ms": null,
+        "audio_queue_ms": null,
+        "network_jitter_ms": null,
+        "packet_loss_percent": null,
+        "dropped_frames": null,
+        "audio_underruns": null
+      }
+    },
+    {
+      "id": "stream-1080p60",
+      "kind": "stream",
+      "duration_seconds": 0,
+      "scenario": {"resolution": "1920x1080", "fps": 60, "network": "Ethernet"},
+      "metrics": {"decode_ms": null, "render_cpu_ms": null, "gpu_completion_ms": null, "present_delay_ms": null, "input_event_to_send_ms": null, "audio_queue_ms": null, "network_jitter_ms": null, "packet_loss_percent": null, "dropped_frames": null, "audio_underruns": null}
+    },
+    {
+      "id": "stream-1440p120",
+      "kind": "stream",
+      "duration_seconds": 0,
+      "scenario": {"resolution": "2560x1440", "fps": 120, "network": "Ethernet"},
+      "metrics": {"decode_ms": null, "render_cpu_ms": null, "gpu_completion_ms": null, "present_delay_ms": null, "input_event_to_send_ms": null, "audio_queue_ms": null, "network_jitter_ms": null, "packet_loss_percent": null, "dropped_frames": null, "audio_underruns": null}
+    },
+    {
+      "id": "stream-4k60",
+      "kind": "stream",
+      "duration_seconds": 0,
+      "scenario": {"resolution": "3840x2160", "fps": 60, "network": "Ethernet"},
+      "metrics": {"decode_ms": null, "render_cpu_ms": null, "gpu_completion_ms": null, "present_delay_ms": null, "input_event_to_send_ms": null, "audio_queue_ms": null, "network_jitter_ms": null, "packet_loss_percent": null, "dropped_frames": null, "audio_underruns": null}
+    }
+  ],
+  "evidence_gaps": [
+    "No controlled Sunshine host, fixed test content, or Ethernet test endpoint was supplied, so stream runs and issue reproduction were not performed.",
+    "Current master has no split decode/render/GPU/present/input/audio instrumentation; those metrics cannot be measured without beginning Phase 1.",
+    "Startup-to-ready has no machine-readable readiness signal and is not approximated with process launch time.",
+    "Idle CPU differs by 0.073 percentage points and mean RSS by 0.15% between runs; both are within the recorded normal-noise bounds of 0.1 percentage point and 1%.",
+    "The initial forced-offscreen harness run was invalid and excluded because the deployed app does not bundle a Qt offscreen platform plugin."
+  ]
+}

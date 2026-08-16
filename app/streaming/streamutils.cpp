@@ -1,4 +1,5 @@
 #include "streamutils.h"
+#include "streamlogic.h"
 
 #include <Qt>
 #include <QDir>
@@ -127,17 +128,12 @@ SDL_Window* StreamUtils::createTestWindow()
 
 void StreamUtils::scaleSourceToDestinationSurface(SDL_Rect* src, SDL_Rect* dst)
 {
-    int dstH = SDL_ceilf((float)dst->w * src->h / src->w);
-    int dstW = SDL_ceilf((float)dst->h * src->w / src->h);
-
-    if (dstH > dst->h) {
-        dst->x += (dst->w - dstW) / 2;
-        dst->w = dstW;
-    }
-    else {
-        dst->y += (dst->h - dstH) / 2;
-        dst->h = dstH;
-    }
+    const auto fitted = StreamLogic::fitAspectRatio(
+        {src->x, src->y, src->w, src->h}, {dst->x, dst->y, dst->w, dst->h});
+    dst->x = fitted.x;
+    dst->y = fitted.y;
+    dst->w = fitted.width;
+    dst->h = fitted.height;
 }
 
 void StreamUtils::screenSpaceToNormalizedDeviceCoords(SDL_FRect* rect, int viewportWidth, int viewportHeight)
@@ -150,10 +146,12 @@ void StreamUtils::screenSpaceToNormalizedDeviceCoords(SDL_FRect* rect, int viewp
 
 void StreamUtils::screenSpaceToNormalizedDeviceCoords(SDL_Rect* src, SDL_FRect* dst, int viewportWidth, int viewportHeight)
 {
-    dst->x = ((float)src->x / (viewportWidth / 2.0f)) - 1.0f;
-    dst->y = ((float)src->y / (viewportHeight / 2.0f)) - 1.0f;
-    dst->w = (float)src->w / (viewportWidth / 2.0f);
-    dst->h = (float)src->h / (viewportHeight / 2.0f);
+    const auto normalized = StreamLogic::normalizeRect(
+        {src->x, src->y, src->w, src->h}, viewportWidth, viewportHeight);
+    dst->x = normalized.x;
+    dst->y = normalized.y;
+    dst->w = normalized.width;
+    dst->h = normalized.height;
 }
 
 int StreamUtils::getDisplayRefreshRate(SDL_Window* window)

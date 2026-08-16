@@ -1,4 +1,6 @@
 #include "sdl.h"
+#include "streaming/audio/audioqueuepolicy.h"
+#include "diagnostics/performancecounters.h"
 
 #include <Limelight.h>
 
@@ -95,6 +97,7 @@ void* SdlAudioRenderer::getAudioBuffer(int*)
 
 bool SdlAudioRenderer::submitAudio(int bytesWritten)
 {
+    static const AudioQueuePolicy queuePolicy;
     if (bytesWritten == 0) {
         // Nothing to do
         return true;
@@ -102,7 +105,11 @@ bool SdlAudioRenderer::submitAudio(int bytesWritten)
 
     // Don't queue if there's already more than 30 ms of audio data waiting
     // in Moonlight's audio queue.
-    if (LiGetPendingAudioDuration() > 30) {
+    const int protocolPendingMs = LiGetPendingAudioDuration();
+    PerformanceCounters::instance().record(PerformanceCounters::Metric::AudioPending,
+                                           protocolPendingMs * 1000ULL);
+    if (queuePolicy.evaluate(protocolPendingMs, 0, true, false) ==
+            AudioQueuePolicy::Decision::DropIncoming) {
         return true;
     }
 
@@ -116,8 +123,12 @@ bool SdlAudioRenderer::submitAudio(int bytesWritten)
             return false;
         }
 
-        // Only queue more samples where there is 50 ms or less in SDL's queue
-        if (SDL_GetQueuedAudioSize(m_AudioDevice) / m_FrameSize * m_FrameDurationMs <= 50) {
+        const int devicePendingMs = SDL_GetQueuedAudioSize(m_AudioDevice) /
+            m_FrameSize * m_FrameDurationMs;
+        PerformanceCounters::instance().record(PerformanceCounters::Metric::SdlQueue,
+                                               devicePendingMs * 1000ULL);
+        if (queuePolicy.evaluate(protocolPendingMs, devicePendingMs, true, false) !=
+                AudioQueuePolicy::Decision::Backpressure) {
             break;
         }
 

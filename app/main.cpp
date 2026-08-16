@@ -13,6 +13,7 @@
 #include <QElapsedTimer>
 #include <QTemporaryFile>
 #include <QRegularExpression>
+#include <QJsonDocument>
 
 #ifdef Q_OS_UNIX
 #include <sys/socket.h>
@@ -54,6 +55,8 @@
 #include "streaming/session.h"
 #include "settings/streamingpreferences.h"
 #include "gui/sdlgamepadkeynavigation.h"
+#include "diagnostics/crashcontext.h"
+#include "diagnostics/performancecounters.h"
 
 #if defined(Q_OS_WIN32)
 #define IS_UNSPECIFIED_HANDLE(x) ((x) == INVALID_HANDLE_VALUE || (x) == NULL)
@@ -489,6 +492,21 @@ int main(int argc, char *argv[])
 #ifdef HAVE_FFMPEG
     av_log_set_callback(ffmpegLogToDiskHandler);
 #endif
+
+    bool performanceCountersEnabled = false;
+    Utils::getEnvironmentVariableOverride("PERFORMANCE_COUNTERS", &performanceCountersEnabled);
+    bool sampleAllPerformanceCounters = false;
+    Utils::getEnvironmentVariableOverride("PERFORMANCE_COUNTERS_SAMPLE_ALL", &sampleAllPerformanceCounters);
+    PerformanceCounters::instance().configure(performanceCountersEnabled,
+                                               sampleAllPerformanceCounters ? 1 : 60);
+
+    CrashContextInput startupContext;
+    startupContext.appCommit = APP_COMMIT;
+    startupContext.dependencyBundle = DEPENDENCY_BUNDLE;
+    startupContext.architecture = QSysInfo::buildCpuArchitecture();
+    startupContext.osBuild = QSysInfo::productVersion();
+    qInfo().noquote() << "Crash context:"
+                      << QJsonDocument(CrashContext::sanitized(startupContext)).toJson(QJsonDocument::Compact);
 
 #ifdef Q_OS_WIN32
     // Create a crash dump when we crash on Windows
@@ -1043,6 +1061,11 @@ int main(int argc, char *argv[])
     }
 
     int err = app.exec();
+
+    if (performanceCountersEnabled) {
+        qInfo().noquote() << "Performance counters:"
+                          << QJsonDocument(PerformanceCounters::instance().snapshot()).toJson(QJsonDocument::Compact);
+    }
 
     // Give worker tasks time to properly exit. Fixes PendingQuitTask
     // sometimes freezing and blocking process exit.

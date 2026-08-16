@@ -3,9 +3,11 @@
 #include <Limelight.h>
 #include "SDL_compat.h"
 #include "streaming/streamutils.h"
+#include "diagnostics/performancecounters.h"
 
 void SdlInputHandler::handleMouseButtonEvent(SDL_MouseButtonEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
     int button;
 
     if (event->which == SDL_TOUCH_MOUSEID) {
@@ -70,6 +72,7 @@ void SdlInputHandler::handleMouseButtonEvent(SDL_MouseButtonEvent* event)
 
 void SdlInputHandler::handleMouseMotionEvent(SDL_MouseMotionEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
     if (!isCaptureActive()) {
         // Not capturing
         return;
@@ -158,6 +161,7 @@ void SdlInputHandler::handleMouseMotionEvent(SDL_MouseMotionEvent* event)
 
 void SdlInputHandler::handleMouseWheelEvent(SDL_MouseWheelEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
     if (!isCaptureActive()) {
         // Not capturing
         return;

@@ -1,5 +1,6 @@
 #include "pacer.h"
 #include "streaming/streamutils.h"
+#include "diagnostics/performancecounters.h"
 
 #ifdef Q_OS_WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -333,13 +334,17 @@ void Pacer::renderFrame(AVFrame* frame)
 {
     // Count time spent in Pacer's queues
     uint64_t beforeRender = LiGetMicroseconds();
-    m_VideoStats->totalPacerTimeUs += (beforeRender - (uint64_t)frame->pkt_dts);
+    const auto queueTimeUs = beforeRender - (uint64_t)frame->pkt_dts;
+    m_VideoStats->totalPacerTimeUs += queueTimeUs;
+    PerformanceCounters::instance().record(PerformanceCounters::Metric::DecodedQueue,
+                                           queueTimeUs);
 
     // Render it
     m_VsyncRenderer->renderFrame(frame);
     uint64_t afterRender = LiGetMicroseconds();
 
-    m_VideoStats->totalRenderTimeUs += (afterRender - beforeRender);
+    const auto renderTimeUs = afterRender - beforeRender;
+    m_VideoStats->totalRenderTimeUs += renderTimeUs;
     m_VideoStats->renderedFrames++;
 
     // Wait until after next frame to free this one to ensure the GPU

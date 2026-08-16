@@ -4,6 +4,7 @@
 #include "settings/mappingmanager.h"
 #include "path.h"
 #include "utils.h"
+#include "diagnostics/performancecounters.h"
 
 #include <QtGlobal>
 #include <QDir>
@@ -445,6 +446,7 @@ void SdlInputHandler::setCaptureActive(bool active)
 
 void SdlInputHandler::handleTouchFingerEvent(SDL_TouchFingerEvent* event)
 {
+    ScopedPerformanceSample inputSample(PerformanceCounters::Metric::InputDispatch);
 #if SDL_VERSION_ATLEAST(2, 0, 10)
     if (SDL_GetTouchDeviceType(event->touchId) != SDL_TOUCH_DEVICE_DIRECT) {
         // Ignore anything that isn't a touchscreen. We may get callbacks

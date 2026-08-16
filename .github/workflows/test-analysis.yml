@@ -1,0 +1,51 @@
+name: Test and analysis
+permissions:
+  contents: read
+
+on:
+  push:
+  pull_request:
+    branches: [master]
+
+jobs:
+  native-arm64-tests:
+    runs-on: macos-26
+    strategy:
+      fail-fast: false
+      matrix:
+        sanitizer: [address, undefined]
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.11.1
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e
+      - name: Build native tests
+        run: |
+          mkdir build-tests
+          cd build-tests
+          qmake ../tests/tests.pro CONFIG+=sanitizer CONFIG+=sanitize_${{ matrix.sanitizer }}
+          make -j$(sysctl -n hw.logicalcpu)
+      - name: Run native tests
+        run: build-tests/moonlight-phase1-tests -o -,txt
+
+  clang-static-analysis:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          submodules: recursive
+      - uses: jurplel/install-qt-action@v4
+        with:
+          version: 6.11.1
+          aqtsource: git+https://github.com/miurahr/aqtinstall.git@073e34d7c2ab4ae6961ed7cca690b3abd5ba5a7e
+      - name: Analyze native test and production primitives
+        run: |
+          brew install llvm
+          export PATH="$(brew --prefix llvm)/bin:$PATH"
+          mkdir build-analysis
+          cd build-analysis
+          qmake ../tests/tests.pro
+          scan-build --status-bugs make -j$(sysctl -n hw.logicalcpu)

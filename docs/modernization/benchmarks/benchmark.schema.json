@@ -1,0 +1,81 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://moonlight-stream.org/schemas/mac-silicon-baseline-v1.json",
+  "title": "Moonlight macOS baseline",
+  "type": "object",
+  "required": ["schema_version", "captured_at", "app", "machine", "environment", "builds", "runs", "evidence_gaps"],
+  "properties": {
+    "schema_version": { "const": 1 },
+    "captured_at": { "type": "string", "format": "date-time" },
+    "app": {
+      "type": "object",
+      "required": ["commit", "version", "dependency_bundle"],
+      "properties": {
+        "commit": { "type": "string", "pattern": "^[0-9a-f]{40}$" },
+        "version": { "type": "string" },
+        "dependency_bundle": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "machine": { "type": "object", "required": ["model", "architecture", "memory_bytes", "cpu_count"] },
+    "environment": { "type": "object", "required": ["macos", "xcode", "sdk", "clang", "qt", "power_source"] },
+    "builds": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["configuration", "architectures", "result"],
+        "properties": {
+          "configuration": { "enum": ["arm64-debug", "arm64-release", "universal-release"] },
+          "architectures": { "type": "array", "items": { "enum": ["arm64", "x86_64"] } },
+          "result": { "enum": ["pass", "fail", "not-run"] }
+        },
+        "additionalProperties": true
+      }
+    },
+    "runs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "duration_seconds", "metrics"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": { "enum": ["startup", "idle", "stream"] },
+          "duration_seconds": { "type": "number", "minimum": 0 },
+          "scenario": { "type": ["object", "null"] },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "startup_to_ready_ms": { "type": ["number", "null"] },
+              "cpu_percent_mean": { "type": ["number", "null"] },
+              "resident_memory_bytes_mean": { "type": ["number", "null"] },
+              "resident_memory_bytes_peak": { "type": ["integer", "null"] },
+              "thermal_state": { "type": ["string", "null"] },
+              "decode_ms": { "$ref": "#/$defs/distribution" },
+              "render_cpu_ms": { "$ref": "#/$defs/distribution" },
+              "gpu_completion_ms": { "$ref": "#/$defs/distribution" },
+              "present_delay_ms": { "$ref": "#/$defs/distribution" },
+              "input_event_to_send_ms": { "$ref": "#/$defs/distribution" },
+              "audio_queue_ms": { "$ref": "#/$defs/distribution" },
+              "network_jitter_ms": { "$ref": "#/$defs/distribution" },
+              "packet_loss_percent": { "type": ["number", "null"] },
+              "dropped_frames": { "type": ["integer", "null"] },
+              "audio_underruns": { "type": ["integer", "null"] }
+            },
+            "additionalProperties": true
+          }
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence_gaps": { "type": "array", "items": { "type": "string" } }
+  },
+  "$defs": {
+    "distribution": {
+      "type": ["object", "null"],
+      "properties": { "median": { "type": "number" }, "p95": { "type": "number" }, "p99": { "type": "number" }, "unit": { "const": "ms" } },
+      "required": ["median", "p95", "p99", "unit"],
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

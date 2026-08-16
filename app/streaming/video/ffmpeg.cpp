@@ -2,6 +2,7 @@
 #include "ffmpeg.h"
 #include "utils.h"
 #include "streaming/session.h"
+#include "diagnostics/performancecounters.h"
 
 #include <h264_stream.h>
 
@@ -785,6 +786,8 @@ void FFmpegVideoDecoder::addVideoStats(VIDEO_STATS& src, VIDEO_STATS& dst)
         // Our logic to determine if RTT is valid depends on us never
         // getting an RTT of 0. ENet currently ensures RTTs are >= 1.
         SDL_assert(dst.lastRtt > 0);
+        PerformanceCounters::instance().record(PerformanceCounters::Metric::NetworkJitter,
+                                               dst.lastRttVariance * 1000ULL);
     }
 
     // Initialize the measurement start point if this is the first video stat window
@@ -2095,6 +2098,7 @@ void FFmpegVideoDecoder::decoderThreadProc()
 
 int FFmpegVideoDecoder::submitDecodeUnit(PDECODE_UNIT du)
 {
+    ScopedPerformanceSample decodeSample(PerformanceCounters::Metric::Decode);
     PLENTRY entry = du->bufferList;
     int err;
 
@@ -2220,4 +2224,3 @@ void FFmpegVideoDecoder::renderFrameOnMainThread()
 {
     m_Pacer->renderOnMainThread();
 }
-

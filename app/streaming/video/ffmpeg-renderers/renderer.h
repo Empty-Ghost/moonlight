@@ -1,5 +1,7 @@
 #pragma once
 
+#include "streaming/video/colorlogic.h"
+
 #include "SDL_compat.h"
 
 #include <array>
@@ -229,34 +231,46 @@ public:
     }
 
     virtual int getFrameColorspace(const AVFrame* frame) {
-        // Prefer the colorspace field on the AVFrame itself
+        FrameColorLogic::Space metadata = FrameColorLogic::Space::Unspecified;
         switch (frame->colorspace) {
         case AVCOL_SPC_SMPTE170M:
         case AVCOL_SPC_BT470BG:
-            return COLORSPACE_REC_601;
+            metadata = FrameColorLogic::Space::Rec601;
+            break;
         case AVCOL_SPC_BT709:
-            return COLORSPACE_REC_709;
+            metadata = FrameColorLogic::Space::Rec709;
+            break;
         case AVCOL_SPC_BT2020_NCL:
         case AVCOL_SPC_BT2020_CL:
-            return COLORSPACE_REC_2020;
+            metadata = FrameColorLogic::Space::Rec2020;
+            break;
         default:
-            // If the colorspace is not populated, assume the encoder
-            // is sending the colorspace that we requested.
-            return getDecoderColorspace();
+            break;
+        }
+        FrameColorLogic::Space requested = FrameColorLogic::Space::Rec601;
+        if (getDecoderColorspace() == COLORSPACE_REC_709) requested = FrameColorLogic::Space::Rec709;
+        else if (getDecoderColorspace() == COLORSPACE_REC_2020) requested = FrameColorLogic::Space::Rec2020;
+        switch (FrameColorLogic::selectSpace(metadata, requested)) {
+        case FrameColorLogic::Space::Rec709: return COLORSPACE_REC_709;
+        case FrameColorLogic::Space::Rec2020: return COLORSPACE_REC_2020;
+        default: return COLORSPACE_REC_601;
         }
     }
 
     virtual bool isFrameFullRange(const AVFrame* frame) {
+        FrameColorLogic::Range metadata = FrameColorLogic::Range::Unspecified;
         switch (frame->color_range) {
         case AVCOL_RANGE_JPEG:
-            return true;
+            metadata = FrameColorLogic::Range::Full;
+            break;
         case AVCOL_RANGE_MPEG:
-            return false;
+            metadata = FrameColorLogic::Range::Limited;
+            break;
         default:
-            // If the color range is not populated, assume the encoder
-            // is sending the color range that we requested.
-            return getDecoderColorRange() == COLOR_RANGE_FULL;
+            break;
         }
+        return FrameColorLogic::selectFullRange(metadata,
+                                                getDecoderColorRange() == COLOR_RANGE_FULL);
     }
 
     virtual bool isRenderThreadSupported() {
