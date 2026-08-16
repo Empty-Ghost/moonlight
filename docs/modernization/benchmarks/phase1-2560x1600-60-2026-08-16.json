@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-16",
+  "source": "operator-provided Moonlight shutdown counters",
+  "scenario": {
+    "resolution": {
+      "width": 2560,
+      "height": 1600
+    },
+    "refresh_rate_hz": 60,
+    "client": "MacBook Air",
+    "host": "Sunshine",
+    "renderer": "Vulkan (libplacebo)"
+  },
+  "sampling": {
+    "sample_every": 60,
+    "sampled_decode_frames": 1330,
+    "estimated_total_decode_frames": 79800,
+    "estimated_duration_seconds_at_60_fps": 1330,
+    "estimate_note": "Derived from sampled decode count and requested 60 fps; not an independent wall-clock measurement."
+  },
+  "counters": {
+    "audio_pending": { "samples": 22, "mean_us": 3181.818181818182, "max_us": 50000 },
+    "decode": { "samples": 1330, "mean_us": 3151.5954887218045, "max_us": 6100 },
+    "decoded_queue": { "samples": 1330, "mean_us": 38.00225563909775, "max_us": 3846 },
+    "gpu_completion": { "samples": 0, "mean_us": 0, "max_us": 0 },
+    "input_dispatch": { "samples": 679, "mean_us": 18.596465390279825, "max_us": 40 },
+    "network_jitter": { "samples": 44, "mean_us": 500, "max_us": 3000 },
+    "present": { "samples": 0, "mean_us": 0, "max_us": 0 },
+    "render_encode": { "samples": 0, "mean_us": 0, "max_us": 0 },
+    "sdl_queue": { "samples": 22, "mean_us": 24090.909090909092, "max_us": 55000 }
+  },
+  "replaced_frames": 0,
+  "observations": [
+    "Decode, decoded queue, input dispatch, and network jitter remained low in the intended-use scenario.",
+    "No latest-frame replacements were observed.",
+    "Audio queues reached 50 ms protocol pending and 55 ms SDL pending in sampled maxima; no audible issue was reported by the operator.",
+    "The selected renderer was Vulkan (libplacebo). Renderer encode, GPU completion, and present counters received no samples because the initial instrumentation covered only the Metal renderer."
+  ]
+}

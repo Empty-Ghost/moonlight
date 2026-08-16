@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "captured_at": "2026-08-16",
+  "source": "operator-provided Moonlight shutdown counters",
+  "scenario": {
+    "resolution": { "width": 2560, "height": 1600 },
+    "refresh_rate_hz": 60,
+    "client": "MacBook Air",
+    "host": "Sunshine",
+    "renderer": "Vulkan (libplacebo)"
+  },
+  "sampling": {
+    "sample_every": 60,
+    "sampled_decode_frames": 174,
+    "estimated_total_decode_frames": 10440,
+    "estimated_duration_seconds_at_60_fps": 174,
+    "estimate_note": "Derived from sampled decode count and requested 60 fps; not an independent wall-clock measurement."
+  },
+  "counters": {
+    "audio_pending": { "samples": 1, "mean_us": 0, "max_us": 0 },
+    "decode": { "samples": 174, "mean_us": 3331.344827586207, "max_us": 5296 },
+    "decoded_queue": { "samples": 174, "mean_us": 34.132183908045974, "max_us": 763 },
+    "gpu_completion": { "samples": 0, "mean_us": 0, "max_us": 0 },
+    "input_dispatch": { "samples": 92, "mean_us": 16.967391304347824, "max_us": 30 },
+    "network_jitter": { "samples": 5, "mean_us": 400, "max_us": 1000 },
+    "present": { "samples": 174, "mean_us": 2367.114942528736, "max_us": 2810 },
+    "render_encode": { "samples": 174, "mean_us": 495.18390804597703, "max_us": 767 },
+    "sdl_queue": { "samples": 1, "mean_us": 15000, "max_us": 15000 }
+  },
+  "replaced_frames": 0,
+  "derived_observations": {
+    "frame_interval_ms": 16.6666666667,
+    "mean_decode_render_present_ms": 6.1936426782,
+    "note": "The summed mean is descriptive only; stages may overlap and it is not an end-to-end latency measurement."
+  },
+  "observations": [
+    "Vulkan render-encode and presentation-wait instrumentation produced samples for every sampled decoded frame.",
+    "No latest-frame replacements were observed.",
+    "The run did not provide enough sampled audio events for a meaningful audio comparison.",
+    "Direct Vulkan GPU completion timing remains unavailable through the current libplacebo integration."
+  ]
+}

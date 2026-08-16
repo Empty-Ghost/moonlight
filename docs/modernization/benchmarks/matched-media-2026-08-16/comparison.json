@@ -1,0 +1,169 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-08-16T19:14:57.580522+00:00",
+  "session": "/Users/justin/Development/moonlight/docs/modernization/benchmarks/matched-media-2026-08-16",
+  "power_source_match": true,
+  "top_power_available": false,
+  "decode_sample_count_percent_delta": -6.904761904761905,
+  "deltas": {
+    "cpu_percent_mean": {
+      "baseline": 14.605604203152364,
+      "candidate": 14.5492119089317,
+      "percent_delta": -0.3861003861003792
+    },
+    "resident_memory_bytes_mean": {
+      "baseline": 269857650,
+      "candidate": 242030416,
+      "percent_delta": -10.311819583398877
+    },
+    "top_power_mean": {
+      "baseline": 0.0,
+      "candidate": 0.0,
+      "percent_delta": null
+    },
+    "counter_audio_pending_mean_us": {
+      "baseline": 745.0980392156863,
+      "candidate": 967.0231729055258,
+      "percent_delta": 29.784688995215305
+    },
+    "counter_audio_pending_max_us": {
+      "baseline": 90000,
+      "candidate": 80000,
+      "percent_delta": -11.11111111111111
+    },
+    "counter_audio_pending_samples": {
+      "baseline": 2550,
+      "candidate": 2244,
+      "percent_delta": -12.0
+    },
+    "counter_decode_mean_us": {
+      "baseline": 3081.745238095238,
+      "candidate": 3022.4092071611253,
+      "percent_delta": -1.925403508396015
+    },
+    "counter_decode_max_us": {
+      "baseline": 7624,
+      "candidate": 8920,
+      "percent_delta": 16.998950682056662
+    },
+    "counter_decode_samples": {
+      "baseline": 420,
+      "candidate": 391,
+      "percent_delta": -6.904761904761905
+    },
+    "counter_decoded_queue_mean_us": {
+      "baseline": 258.69212410501194,
+      "candidate": 20.41794871794872,
+      "percent_delta": -92.10723991362784
+    },
+    "counter_decoded_queue_max_us": {
+      "baseline": 94538,
+      "candidate": 491,
+      "percent_delta": -99.48063212676384
+    },
+    "counter_decoded_queue_samples": {
+      "baseline": 419,
+      "candidate": 390,
+      "percent_delta": -6.921241050119332
+    },
+    "counter_gpu_completion_mean_us": {
+      "baseline": 0,
+      "candidate": 0,
+      "percent_delta": null
+    },
+    "counter_gpu_completion_max_us": {
+      "baseline": 0,
+      "candidate": 0,
+      "percent_delta": null
+    },
+    "counter_gpu_completion_samples": {
+      "baseline": 0,
+      "candidate": 0,
+      "percent_delta": null
+    },
+    "counter_input_dispatch_mean_us": {
+      "baseline": 14.142857142857142,
+      "candidate": 13,
+      "percent_delta": -8.080808080808078
+    },
+    "counter_input_dispatch_max_us": {
+      "baseline": 29,
+      "candidate": 24,
+      "percent_delta": -17.24137931034483
+    },
+    "counter_input_dispatch_samples": {
+      "baseline": 14,
+      "candidate": 29,
+      "percent_delta": 107.14285714285714
+    },
+    "counter_network_jitter_mean_us": {
+      "baseline": 583.3333333333334,
+      "candidate": 750,
+      "percent_delta": 28.571428571428566
+    },
+    "counter_network_jitter_max_us": {
+      "baseline": 2000,
+      "candidate": 2000,
+      "percent_delta": 0.0
+    },
+    "counter_network_jitter_samples": {
+      "baseline": 12,
+      "candidate": 12,
+      "percent_delta": 0.0
+    },
+    "counter_present_mean_us": {
+      "baseline": 2582.0787589498805,
+      "candidate": 2407.8205128205127,
+      "percent_delta": -6.748757973604096
+    },
+    "counter_present_max_us": {
+      "baseline": 18678,
+      "candidate": 17823,
+      "percent_delta": -4.577577899132669
+    },
+    "counter_present_samples": {
+      "baseline": 419,
+      "candidate": 390,
+      "percent_delta": -6.921241050119332
+    },
+    "counter_render_encode_mean_us": {
+      "baseline": 437.0071599045346,
+      "candidate": 418.64102564102564,
+      "percent_delta": -4.2027078612444475
+    },
+    "counter_render_encode_max_us": {
+      "baseline": 1005,
+      "candidate": 635,
+      "percent_delta": -36.81592039800995
+    },
+    "counter_render_encode_samples": {
+      "baseline": 419,
+      "candidate": 390,
+      "percent_delta": -6.921241050119332
+    },
+    "counter_sdl_queue_mean_us": {
+      "baseline": 39051.805337519625,
+      "candidate": 41373.730964467,
+      "percent_delta": 5.945757454435919
+    },
+    "counter_sdl_queue_max_us": {
+      "baseline": 55000,
+      "candidate": 55000,
+      "percent_delta": 0.0
+    },
+    "counter_sdl_queue_samples": {
+      "baseline": 3185,
+      "candidate": 3152,
+      "percent_delta": -1.0361067503924646
+    }
+  },
+  "replaced_frames": {
+    "baseline": 0,
+    "candidate": 0
+  },
+  "operator_observations": {
+    "baseline": "none",
+    "candidate": "none"
+  },
+  "decision": "local matched runtime completed without an observed blocker; manual acceptance remains required because video sample counts differ and the local power metric was unavailable"
+}

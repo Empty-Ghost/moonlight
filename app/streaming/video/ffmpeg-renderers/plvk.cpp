@@ -2,6 +2,7 @@
 
 #include "streaming/session.h"
 #include "streaming/streamutils.h"
+#include "diagnostics/performancecounters.h"
 
 // Implementation in plvk_c.c
 #define PL_LIBAV_IMPLEMENTATION 0
@@ -905,7 +906,10 @@ void PlVkRenderer::waitToRender()
     //
     // NB: This seems to cause performance problems with the Windows display stack
     // (particularly on Nvidia) so we will only do this for non-Windows platforms.
+    const uint64_t presentWaitStartedUs = LiGetMicroseconds();
     pl_swapchain_swap_buffers(m_Swapchain);
+    PerformanceCounters::instance().record(PerformanceCounters::Metric::Present,
+                                           LiGetMicroseconds() - presentWaitStartedUs);
 #endif
 
     // Handle the swapchain being resized
@@ -1077,11 +1081,14 @@ void PlVkRenderer::renderFrame(AVFrame *frame)
     // Render the video image and overlays into the swapchain buffer
     targetFrame.num_overlays = (int)overlays.size();
     targetFrame.overlays = overlays.data();
+    const uint64_t renderStartedUs = LiGetMicroseconds();
     if (!pl_render_image(m_Renderer, &mappedFrame, &targetFrame, &pl_render_fast_params)) {
         SDL_LogError(SDL_LOG_CATEGORY_APPLICATION,
                      "pl_render_image() failed");
         // NB: We must fallthrough to call pl_swapchain_submit_frame()
     }
+    PerformanceCounters::instance().record(PerformanceCounters::Metric::RenderEncode,
+                                           LiGetMicroseconds() - renderStartedUs);
 
     // Submit the frame for display and swap buffers
     m_HasPendingSwapchainFrame = false;

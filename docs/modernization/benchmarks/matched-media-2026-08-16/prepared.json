@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "prepared_at": "2026-08-16T17:49:07.158420+00:00",
+  "scenario": {
+    "resolution": {
+      "width": 2560,
+      "height": 1600
+    },
+    "refresh_rate_hz": 60,
+    "host": "Sunshine",
+    "renderer_required": "Vulkan (libplacebo)",
+    "timed_duration_seconds": 600,
+    "order": [
+      "baseline",
+      "candidate"
+    ]
+  },
+  "apps": {
+    "baseline": {
+      "path": "/Users/justin/Development/moonlight/build/phase2-media-matched/Moonlight-v12.app",
+      "binary_sha256": "bf5246fc7515e69ccb6d679d9a6d1f520534a3c95edea113c1378d8433c1ecda",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "framework_sha256": {
+        "libavcodec.63.dylib": "ef5954f64ab101ae68a79c6fd6d003d5060d60239cf63d6bb096ed6f564d612e",
+        "libavutil.61.dylib": "51bd85309b3502f523e679aaebe0a921bcc0f3a53c4fea431a30d146ca6c7977",
+        "libswscale.10.dylib": "7fc6a3ac5724ca999e4c81380009ca0c54ab20c777c505ea6a29c591bf0d3ccc",
+        "libplacebo.dylib": "8cbfa4e17a944da6d3085c4591c01d35ab4f4a62e170d58519778aa9edb3e0a4",
+        "libMoltenVK.dylib": "34cebf299c70bc47b4aa9ade4231d4a53cf02c9cadfe99950c73aeee20e8183b"
+      }
+    },
+    "candidate": {
+      "path": "/Users/justin/Development/moonlight/build/phase2-media-matched/Moonlight-media-candidate.app",
+      "binary_sha256": "bf5246fc7515e69ccb6d679d9a6d1f520534a3c95edea113c1378d8433c1ecda",
+      "architectures": [
+        "x86_64",
+        "arm64"
+      ],
+      "framework_sha256": {
+        "libavcodec.63.dylib": "cac4dfb53e6d81fd834581ac0d25b93f401843970747c0a9209c05ed32f92870",
+        "libavutil.61.dylib": "a053dde96c9028ae23a117d6fbd86a6879c59d0ff659c4323da6c1d21c98958e",
+        "libswscale.10.dylib": "b14a054194841f8dcc35854afc74cf46f0d54b43249df0ed80327818de9debde",
+        "libplacebo.dylib": "bfca6f03a0259f9031b030496749715c924c2800acbaf14af52190eabe8c85a5",
+        "libMoltenVK.dylib": "3e2ba682b6006d20f6fd7233cffb826951fef17b98c22e7dedc0fff93f3fba9e"
+      }
+    }
+  },
+  "differing_media_frameworks": [
+    "libavcodec.63.dylib",
+    "libavutil.61.dylib",
+    "libswscale.10.dylib",
+    "libplacebo.dylib",
+    "libMoltenVK.dylib"
+  ],
+  "byte_identical_executable": true,
+  "only_differing_bundle_files": [
+    "Contents/Frameworks/libMoltenVK.dylib",
+    "Contents/Frameworks/libavcodec.63.dylib",
+    "Contents/Frameworks/libavutil.61.dylib",
+    "Contents/Frameworks/libplacebo.dylib",
+    "Contents/Frameworks/libswscale.10.dylib"
+  ],
+  "power_source_at_preparation": "Battery Power",
+  "battery_at_preparation": "Now drawing from 'Battery Power'\n -InternalBattery-0 (id=22610019)\t59%; discharging; 4:46 remaining present: true",
+  "thermal_at_preparation": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+  "raw_log_policy": "Full Moonlight logs remain in /tmp and are not copied into the repository."
+}

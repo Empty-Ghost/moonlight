@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "variant": "baseline",
+  "captured_at": "2026-08-16T18:54:34.847283+00:00",
+  "scenario": {
+    "resolution": {
+      "width": 2560,
+      "height": 1600
+    },
+    "refresh_rate_hz": 60,
+    "host": "Sunshine",
+    "renderer_required": "Vulkan (libplacebo)",
+    "timed_duration_seconds": 600
+  },
+  "app": {
+    "path": "/Users/justin/Development/moonlight/build/phase2-media-matched/Moonlight-v12.app",
+    "binary_sha256": "bf5246fc7515e69ccb6d679d9a6d1f520534a3c95edea113c1378d8433c1ecda",
+    "architectures": [
+      "x86_64",
+      "arm64"
+    ],
+    "framework_sha256": {
+      "libavcodec.63.dylib": "ef5954f64ab101ae68a79c6fd6d003d5060d60239cf63d6bb096ed6f564d612e",
+      "libavutil.61.dylib": "51bd85309b3502f523e679aaebe0a921bcc0f3a53c4fea431a30d146ca6c7977",
+      "libswscale.10.dylib": "7fc6a3ac5724ca999e4c81380009ca0c54ab20c777c505ea6a29c591bf0d3ccc",
+      "libplacebo.dylib": "8cbfa4e17a944da6d3085c4591c01d35ab4f4a62e170d58519778aa9edb3e0a4",
+      "libMoltenVK.dylib": "34cebf299c70bc47b4aa9ade4231d4a53cf02c9cadfe99950c73aeee20e8183b"
+    }
+  },
+  "environment": {
+    "power_source_start": "AC Power",
+    "power_source_end": "AC Power",
+    "battery_start": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=22610019)\t59%; AC attached; not charging present: true",
+    "battery_end": "Now drawing from 'AC Power'\n -InternalBattery-0 (id=22610019)\t71%; charging; 1:09 remaining present: true",
+    "thermal_start": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded",
+    "thermal_end": "Note: No thermal warning level has been recorded\nNote: No performance warning level has been recorded\nNote: No CPU power status has been recorded"
+  },
+  "process_metrics": {
+    "cpu_percent_mean": 14.605604203152364,
+    "cpu_percent_max": 35.1,
+    "resident_memory_bytes_mean": 269857650,
+    "resident_memory_bytes_peak": 277315584,
+    "top_power_mean": 0.0,
+    "top_power_max": 0.0,
+    "sample_count": 571,
+    "power_sample_count": 115,
+    "top_power_note": "macOS top POWER is a relative process metric, not watts."
+  },
+  "performance_counters": {
+    "enabled": true,
+    "metrics": {
+      "audio_pending": {
+        "max_us": 90000,
+        "mean_us": 745.0980392156863,
+        "samples": 2550
+      },
+      "decode": {
+        "max_us": 7624,
+        "mean_us": 3081.745238095238,
+        "samples": 420
+      },
+      "decoded_queue": {
+        "max_us": 94538,
+        "mean_us": 258.69212410501194,
+        "samples": 419
+      },
+      "gpu_completion": {
+        "max_us": 0,
+        "mean_us": 0,
+        "samples": 0
+      },
+      "input_dispatch": {
+        "max_us": 29,
+        "mean_us": 14.142857142857142,
+        "samples": 14
+      },
+      "network_jitter": {
+        "max_us": 2000,
+        "mean_us": 583.3333333333334,
+        "samples": 12
+      },
+      "present": {
+        "max_us": 18678,
+        "mean_us": 2582.0787589498805,
+        "samples": 419
+      },
+      "render_encode": {
+        "max_us": 1005,
+        "mean_us": 437.0071599045346,
+        "samples": 419
+      },
+      "sdl_queue": {
+        "max_us": 55000,
+        "mean_us": 39051.805337519625,
+        "samples": 3185
+      }
+    },
+    "replaced_frames": 0,
+    "sample_every": 60
+  },
+  "renderer_confirmed": "Vulkan (libplacebo)",
+  "operator_observation": "none",
+  "raw_log": {
+    "path": "/tmp/Moonlight-1786905605.log",
+    "privacy_note": "The full runtime log remains in /tmp and is not copied into the repository."
+  }
+}
