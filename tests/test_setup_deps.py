@@ -28,6 +28,29 @@ def make_archive(path: pathlib.Path, entries: dict[str, bytes]) -> dict[str, obj
 
 
 class SetupDepsTests(unittest.TestCase):
+    def test_validate_contents_accepts_arm64_dependencies(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            (root / "include").mkdir()
+            (root / "lib").mkdir()
+            for library in ("libSDL2.dylib", "libavcodec.63.dylib", "libssl.3.dylib"):
+                (root / "lib" / library).touch()
+            result = mock.Mock(returncode=0, stdout="arm64\n")
+            with mock.patch.object(setup_deps.subprocess, "run", return_value=result):
+                setup_deps.validate_contents(root, "mac")
+
+    def test_validate_contents_rejects_x86_64_only_dependencies(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            root = pathlib.Path(temporary)
+            (root / "include").mkdir()
+            (root / "lib").mkdir()
+            for library in ("libSDL2.dylib", "libavcodec.63.dylib", "libssl.3.dylib"):
+                (root / "lib" / library).touch()
+            result = mock.Mock(returncode=0, stdout="x86_64\n")
+            with mock.patch.object(setup_deps.subprocess, "run", return_value=result):
+                with self.assertRaisesRegex(RuntimeError, "does not contain arm64"):
+                    setup_deps.validate_contents(root, "mac")
+
     def test_atomic_install_restores_previous_tree_on_swap_failure(self) -> None:
         with tempfile.TemporaryDirectory() as temporary:
             root = pathlib.Path(temporary)

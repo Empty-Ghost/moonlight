@@ -268,8 +268,8 @@ def prepare(session: pathlib.Path) -> None:
         raise SystemExit("Quit all running Moonlight instances before preparing the session.")
     session.mkdir(parents=True, exist_ok=True)
     manifests = {variant: app_manifest(app) for variant, app in APPS.items()}
-    if any(manifest["architectures"] != ["x86_64", "arm64"] for manifest in manifests.values()):
-        raise SystemExit("Both prepared apps must contain x86_64 and arm64 in that order.")
+    if any(manifest["architectures"] != ["arm64"] for manifest in manifests.values()):
+        raise SystemExit("Both prepared apps must be arm64-only.")
     differing_frameworks = [
         name for name in FRAMEWORKS
         if manifests["baseline"]["framework_sha256"][name]

@@ -111,8 +111,8 @@ def validate_contents(root: pathlib.Path, subfolder: str) -> None:
             ["/usr/bin/lipo", "-archs", str(path)], text=True, capture_output=True
         )
         architectures = set(result.stdout.split())
-        if result.returncode or not {"arm64", "x86_64"}.issubset(architectures):
-            raise RuntimeError(f"Dependency library is not universal arm64/x86_64: lib/{library}")
+        if result.returncode or "arm64" not in architectures:
+            raise RuntimeError(f"Dependency library does not contain arm64: lib/{library}")
 
 
 def atomic_install(staged: pathlib.Path, target: pathlib.Path) -> None:

@@ -13,7 +13,6 @@ fi
 
 jobs=$(sysctl -n hw.logicalcpu)
 native_qmake=${QMAKE_NATIVE:-qmake}
-universal_qmake=${QMAKE_UNIVERSAL:-qmake}
 build_one() {
   local folder=$1
   local arches=$2
@@ -31,12 +30,10 @@ build_one() {
 
 build_one phase0-arm64-debug arm64 debug "$native_qmake"
 build_one phase0-arm64-release arm64 release "$native_qmake"
-build_one phase0-universal-release "x86_64 arm64" release "$universal_qmake"
 
 for binary in \
   build/phase0-arm64-debug/app/Moonlight.app/Contents/MacOS/Moonlight \
-  build/phase0-arm64-release/app/Moonlight.app/Contents/MacOS/Moonlight \
-  build/phase0-universal-release/app/Moonlight.app/Contents/MacOS/Moonlight; do
+  build/phase0-arm64-release/app/Moonlight.app/Contents/MacOS/Moonlight; do
   file "$binary"
   lipo -archs "$binary"
 done

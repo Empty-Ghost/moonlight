@@ -1,3 +1,4 @@
+#!/bin/bash
 # This script requires create-dmg to be installed from https://github.com/sindresorhus/create-dmg
 BUILD_CONFIG=$1
 
@@ -48,7 +49,7 @@ export LDFLAGS=-flto=thin
 
 echo Configuring the project
 pushd $BUILD_FOLDER
-qmake $SOURCE_ROOT/moonlight-qt.pro QMAKE_APPLE_DEVICE_ARCHS="x86_64 arm64" || fail "Qmake failed!"
+qmake $SOURCE_ROOT/moonlight-qt.pro QMAKE_APPLE_DEVICE_ARCHS="arm64" || fail "Qmake failed!"
 popd
 
 echo Compiling Moonlight in $BUILD_CONFIG configuration
@@ -70,6 +71,31 @@ macdeployqt $BUILD_FOLDER/app/Moonlight.app $EXTRA_ARGS -qmldir=$SOURCE_ROOT/app
 
 echo Removing dSYM files from app bundle
 find $BUILD_FOLDER/app/Moonlight.app/ -name '*.dSYM' | xargs rm -rf
+
+echo Enforcing arm64-only app bundle
+while IFS= read -r -d '' BINARY; do
+  if file -b "$BINARY" | grep -q 'Mach-O'; then
+    ARCHITECTURES=$(lipo -archs "$BINARY") || fail "Unable to inspect architectures in $BINARY"
+    case " $ARCHITECTURES " in
+      *" arm64 "*) ;;
+      *) fail "Missing arm64 slice in $BINARY: $ARCHITECTURES" ;;
+    esac
+
+    if [ "$ARCHITECTURES" != "arm64" ]; then
+      THIN_BINARY="$BINARY.arm64"
+      lipo "$BINARY" -thin arm64 -output "$THIN_BINARY" || fail "Unable to thin $BINARY"
+      chmod "$(stat -f %Lp "$BINARY")" "$THIN_BINARY" || fail "Unable to preserve permissions for $BINARY"
+      mv -f "$THIN_BINARY" "$BINARY" || fail "Unable to replace $BINARY"
+    fi
+  fi
+done < <(find "$BUILD_FOLDER/app/Moonlight.app" -type f -print0)
+
+while IFS= read -r -d '' BINARY; do
+  if file -b "$BINARY" | grep -q 'Mach-O'; then
+    ARCHITECTURES=$(lipo -archs "$BINARY") || fail "Unable to inspect architectures in $BINARY"
+    [ "$ARCHITECTURES" = "arm64" ] || fail "Unexpected architectures in $BINARY: $ARCHITECTURES"
+  fi
+done < <(find "$BUILD_FOLDER/app/Moonlight.app" -type f -print0)
 
 if [ "$SIGNING_IDENTITY" != "" ]; then
   echo Signing app bundle

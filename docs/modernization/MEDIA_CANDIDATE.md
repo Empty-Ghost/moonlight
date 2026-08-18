@@ -1,5 +1,7 @@
 # Phase 2 media candidate ledger
 
+> Architecture note (2026-08-17): x86_64, Rosetta, and universal results below are retained as historical evidence from before macOS x86_64 support was dropped. The existing universal candidate archive is preserved and is not overwritten; the next candidate archive is arm64-only.
+
 Review date: 2026-08-16  
 Owner: local execution by Codex; maintainer review unassigned  
 Dependency branch: `phase2-media-v13-candidate` in `/Users/justin/Development/moonlight-qt-deps`  

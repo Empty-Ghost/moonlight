@@ -2,12 +2,13 @@
 
 Status: proposed execution plan  
 Prepared: 2026-08-14  
+Updated: 2026-08-17 (macOS arm64-only support decision)
 Primary repository: `moonlight-stream/moonlight-qt`  
 Companion dependency repository: `moonlight-stream/moonlight-qt-deps`
 
 ## 1. Objective
 
-Modernize every direct and bundled dependency, fix reproducible macOS bugs, and improve Moonlight's latency, frame pacing, audio stability, image quality, energy use, and packaging on Apple Silicon without regressing Intel macOS or the other supported platforms.
+Modernize every direct and bundled dependency, fix reproducible macOS bugs, and improve Moonlight's latency, frame pacing, audio stability, image quality, energy use, and packaging on Apple Silicon without regressing the other supported platforms.
 
 This is a controlled modernization program, not a one-shot "update everything" change. Codex should use small branches and independently reviewable pull requests, record baselines before optimizing, and keep the last known-good dependency bundle available for immediate rollback.
 
@@ -19,7 +20,7 @@ The plan is based on the following verified local state:
 - The application version file remains `6.1.0`, even though `master` contains substantial post-release work.
 - The local test machine is a 10-core Apple M4 MacBook Air with 16 GB RAM, a 10-core GPU, Metal 4, and a 2560 x 1664 Retina display.
 - The local environment is macOS 26.6.1, Xcode 26.6, Apple Clang 21, macOS SDK 26.5, and Qt 6.11.1.
-- The production macOS build targets macOS 13 or later and currently creates a universal `x86_64 arm64` app.
+- The historical production macOS build targeted macOS 13 or later and created a universal `x86_64 arm64` app. On 2026-08-17, the project explicitly changed the macOS target to arm64-only; `v12` remains the rollback bundle but is not the architecture contract for `v13`.
 - The macOS implementation uses VideoToolbox plus Metal or `AVSampleBufferDisplayLayer`; the main Apple Silicon Metal path uses `CAMetalDisplayLink` on macOS 14 or later.
 - The current dependency bundle is `moonlight-qt-deps` tag `v12`, built on 2026-08-06. It is already recent, so upgrades must be based on a fresh compatibility and security audit rather than an assumption that every component is stale.
 - There is no application unit-test, benchmark, sanitizer, fuzzing, or static-analysis suite in this repository. CI primarily proves compilation and packaging, with only qmake feature compile tests for EGL and Steam Link.
@@ -31,13 +32,13 @@ The plan is based on the following verified local state:
 
 - All application submodules, bundled libraries, Qt/toolchain pins, CI actions, build tools, packaging tools, controller mappings, and macOS system-framework integrations.
 - Native arm64 correctness and performance on Apple M-series hardware.
-- Universal binary correctness for the distributed macOS app.
+- Arm64-only correctness for the distributed macOS app and every packaged Mach-O dependency.
 - macOS input, networking diagnostics, decoding, rendering, HDR/color, HiDPI, audio, controllers, window lifecycle, power, signing, notarization, and update behavior.
 - Regression tests, performance harnesses, observability, dependency integrity, SBOM generation, and release gates.
 
 ### Constraints
 
-- Preserve the Intel `x86_64` slice until the project explicitly decides to drop Intel macOS.
+- macOS `x86_64` support is dropped as of 2026-08-17. Do not spend build, test, packaging, or release-gate capacity on the Intel Mac slice. This decision does not drop Windows x64 or Linux x86_64.
 - Preserve Linux, Windows, and Steam Link behavior. Shared-code changes must pass all existing platform builds.
 - Do not bulk-merge upstream feature pull requests. Rebase, review, test, and split them as needed.
 - Do not work around Wi-Fi jitter by silently disabling AWDL, AirDrop, or other system services. The application may diagnose and document OS-level interference, but it must not make privileged persistent network changes.
@@ -50,7 +51,7 @@ The program is complete only when all of these conditions are met:
 
 1. A generated dependency inventory covers every item in section 7, including transitive dynamic libraries, exact versions or commit SHAs, licenses, source URLs, build options, and known patches.
 2. Every dependency is either updated to the newest compatible stable release available at execution time or has a written exception with owner, reason, risk, and review date.
-3. Clean native arm64 Debug and Release builds pass, the universal Release build passes, and its `x86_64` slice passes at least a launch and smoke-test gate on an Intel Mac or under an explicitly documented substitute.
+3. Clean native arm64 Debug and Release builds pass, and the distributable Release bundle contains only arm64 Mach-O binaries.
 4. All packaged Mach-O binaries have the expected slices, deployment target, install names, rpaths, signatures, and no Homebrew or developer-machine paths.
 5. Confirmed P0 and P1 macOS issues have regression coverage and are fixed. P2 issues are fixed or explicitly deferred with evidence.
 6. The benchmark matrix in section 10 is recorded before and after each performance change. No accepted change regresses median or p95 input latency, frame pacing, dropped frames, audio underruns, CPU, GPU, memory, or energy by more than 5% in its unaffected scenarios.
@@ -86,7 +87,7 @@ Deliverables:
 Tasks:
 
 - Record app commit, submodule SHAs, dependency-bundle tag, dynamic-library versions, Qt/Xcode/SDK versions, deployment target, compiler flags, and CI action pins.
-- Build a native arm64 Debug app first. Then build native arm64 Release and the existing universal Release artifact.
+- Build native arm64 Debug and Release apps. Preserve prior universal evidence as historical baseline evidence only.
 - Capture startup time, idle resource use, stream resource use, thermal state, memory high-water mark, decoder/render/present timing, audio queue depth, input event-to-send delay, packet loss/jitter, and dropped frames.
 - Add a machine-readable benchmark schema before collecting results so later phases cannot cherry-pick metrics.
 - Reproduce reported problems using current `master` and a controlled Sunshine host. Keep release 6.1.0 only as a comparison build.
@@ -104,6 +105,7 @@ Tasks:
 - Add a headless or mockable renderer contract test for frame ownership, replacement, reset, and color-space changes.
 - Add deterministic audio queue tests for normal cadence, jitter bursts, device loss, sample-rate change, and backpressure.
 - Add input trace capture/replay for absolute mouse, relative mouse, touchpad, 125/500/1000 Hz USB mouse, high-resolution scrolling, and controller axes.
+- Preserve the input source in traces: distinguish mouse motion, macOS indirect trackpad contacts, direct touchscreen contacts, and controller touchpads. Record normalized contacts only; do not record user-identifying device serials or raw gesture content outside the bounded test trace.
 - Add structured performance counters for decode, queue, render encode, GPU completion, present, input dispatch, audio pending duration, SDL queue duration, and network jitter. Counters must be cheap and disabled or sampled in normal builds.
 - Add crash-context metadata: app commit, dependency bundle, architecture, macOS build, machine identifier, active renderer, codec, pixel format, display refresh/scale, audio device, and power/thermal state. Redact host names, user paths, tokens, and addresses by default.
 - Add AddressSanitizer and UndefinedBehaviorSanitizer jobs for native arm64 Debug where supported; add Clang static analysis and CodeQL or an equivalent C/C++ scanner.
@@ -135,8 +137,8 @@ Run each group through its own dependency-repository branch and artifact:
 For each group:
 
 - Review release notes and migrations between the old and candidate pins.
-- Build both arm64 and x86_64 slices with macOS 13 as the deployment target.
-- Run the dependency's tests for each architecture. Do not keep `tests=false` as the only validation path; production archives can still omit test binaries.
+- Build the arm64 slice with macOS 13 as the deployment target.
+- Run the dependency's tests on arm64. Do not keep `tests=false` as the only validation path; production archives can still omit test binaries.
 - Run ABI and exported-symbol comparisons, `lipo` checks, `otool` dependency checks, and license diffs.
 - Run the Moonlight test and benchmark matrix with only that group changed.
 - Save a uniquely versioned, immutable artifact and checksum; never replace an existing tag asset.
@@ -162,13 +164,14 @@ Primary issues: [#1929](https://github.com/moonlight-stream/moonlight-qt/issues/
 
 - Instrument AppKit/HID event timestamp, SDL delivery, event coalescing, Moonlight dispatch, protocol send, host receipt if available, decode, render, and present. Separate input latency from host-cursor display latency.
 - Verify absolute and relative paths independently for USB mice, Bluetooth mice, and the built-in trackpad.
+- Characterize the built-in Mac trackpad separately from mice: record whether SDL exposes indirect absolute/relative contacts, contact IDs, pressure, contact area, and physical dimensions on each supported macOS/SDL combination. Do not depend on private Apple frameworks or infer multi-touch contacts from already-translated mouse events.
 - Measure the current SDL event batching. Ensure batching collapses redundant absolute positions while preserving the complete relative delta and button ordering.
 - Prototype a native CoreHID/IOHID path behind a runtime feature flag. Review any forthcoming upstream pull request for permissions, sandboxing, accessibility prompts, device hotplug, multiple mice, scroll behavior, and fallback to SDL.
 - Re-test AppKit mouse coalescing only as a documented control; upstream issue discussion indicates it did not materially help.
 - Keep local cursor rendering as a separate protocol feature. It can improve perceived desktop cursor latency but must not be reported as a reduction in actual remote input latency.
 - Add 125/500/1000 Hz replay tests and a stress test ensuring input cannot starve frame presentation or networking.
 
-Acceptance: no event loss or ordering regressions; p95 event-to-send latency and high-rate CPU load improve on the M4 baseline; fallback behavior remains correct on Intel and older macOS.
+Acceptance: no event loss or ordering regressions; p95 event-to-send latency and high-rate CPU load improve on the M4 baseline; fallback behavior remains correct on supported arm64 macOS releases.
 
 #### 3.2 Video decode, rendering, frame pacing, and energy
 
@@ -243,10 +246,40 @@ Priority order:
 1. Automatic display recommendations: propose resolution, refresh, HDR, codec, and bitrate using measured client/server capabilities; require confirmation before applying.
 2. Low-latency cursor mode: coordinate protocol work with Sunshine and `moonlight-common-c` to send cursor image/hotspot/visibility and render it locally. Keep a host-cursor fallback.
 3. Native macOS input option: graduate the CoreHID prototype only if it is measurably better and permission/fallback behavior is production-safe.
-4. Native CoreAudio renderer: ship passthrough and recovery first; add spatial audio as an opt-in follow-up.
-5. Per-display and per-host profiles: let users preserve tested settings without globally changing defaults.
-6. Video super resolution: evaluate open upstream work, but accept it on Apple Silicon only when quality is objectively better and its added latency, GPU time, energy, and thermal load meet explicit budgets. Default it off initially.
-7. Adaptive bitrate: evaluate current upstream work using controlled loss/jitter tests and ensure it cannot oscillate, hide local client bottlenecks, or exceed the user's cap.
+4. Native Mac trackpad passthrough: add an opt-in, feature-negotiated path that preserves multi-contact trackpad semantics to a compatible host. Keep the current mouse path as the default and fallback.
+5. Native CoreAudio renderer: ship passthrough and recovery first; add spatial audio as an opt-in follow-up.
+6. Per-display and per-host profiles: let users preserve tested settings without globally changing defaults.
+7. Video super resolution: evaluate open upstream work, but accept it on Apple Silicon only when quality is objectively better and its added latency, GPU time, energy, and thermal load meet explicit budgets. Default it off initially.
+8. Adaptive bitrate: evaluate current upstream work using controlled loss/jitter tests and ensure it cannot oscillate, hide local client bottlenecks, or exceed the user's cap.
+
+#### 4.1 Native Mac trackpad passthrough
+
+This is a coordinated client/protocol/host feature, not a relabeling of existing mouse input. Moonlight currently routes non-direct SDL touch devices through the mouse path, generic native touch packets represent a screen-mapped touchscreen, and controller-touchpad packets represent a game controller. Preserve those distinct meanings.
+
+Host-fork implementation reference: [`docs/modernization/VIBEPOLLO_TRACKPAD_FORK_REFERENCE.md`](docs/modernization/VIBEPOLLO_TRACKPAD_FORK_REFERENCE.md).
+
+Moonlight and `moonlight-common-c` tasks:
+
+- Add a macOS capability probe for indirect trackpad contacts. Prefer supported SDL APIs when they provide stable contact IDs and required metadata; use a public CoreHID/IOHID path only if SDL is insufficient. Do not use Apple's private `MultitouchSupport.framework`.
+- Capture bounded per-contact down, move, up, and cancel events with stable IDs, normalized device-relative coordinates, pressure/contact area when available, and the trackpad's physical width and height. Explicitly cancel all active contacts on focus loss, stream termination, device removal, sleep, or input-mode changes.
+- Extend `moonlight-common-c` with versioned trackpad packets and a separate host feature flag. Do not overload `LiSendTouchEvent()` or `LiSendControllerTouchEvent*()` in a way that causes legacy hosts to interpret a trackpad as a touchscreen or game controller.
+- Negotiate the feature before suppressing mouse translation. Unsupported or rejected negotiation must retain today's mouse movement, click, secondary-click, and high-resolution scrolling behavior without reconnecting.
+- Add a per-host opt-in setting and an emergency runtime kill switch. Prevent duplicate delivery when macOS/SDL emits both translated mouse events and raw contacts for the same gesture.
+- Keep local macOS gestures that Moonlight or the OS owns, including stream shortcuts and capture release, deterministic and documented. Define whether each gesture is handled locally, forwarded as contacts, or translated to legacy mouse input.
+
+Companion host contract:
+
+- Coordinate a bounded Vibepollo/Sunshine host change that advertises the new capability and preserves device-relative contacts rather than screen-mapping them.
+- On supported Windows 11 builds, dynamically probe the documented `CreateSyntheticPointerDevice2` API and create `PT_TOUCHPAD` with a physical size and at most five simultaneous contacts. Treat Microsoft's current prerelease API status as a release risk until the API and SDK contract are stable: [CreateSyntheticPointerDevice2](https://learn.microsoft.com/en-us/windows/win32/input-precisiontouchpad/createsyntheticpointerdevice2).
+- Do not silently fall back to `PT_TOUCH`, which would expose a touchscreen rather than a Precision Touchpad. Fall back to Moonlight's legacy mouse path instead.
+- Treat Windows 10 native Precision Touchpad emulation as unsupported unless a separately reviewed, signed virtual-HID solution exists. A new kernel driver, driver distribution, or signing workflow is outside this Moonlight client feature and requires its own security and release plan.
+
+Acceptance:
+
+- A compatible Windows 11 Vibepollo/Sunshine host identifies the stream input as a touchpad and receives one through five ordered contacts without stuck fingers, duplicate clicks, pointer jumps, or gesture leakage after focus/session changes.
+- Windows pointer movement, physical click, tap-to-click, secondary click, two-finger scroll, pinch, and supported three-/four-finger gestures match a local Precision Touchpad closely enough to pass a documented gesture matrix. Record expected OS-reserved differences.
+- Unsupported Vibepollo/Sunshine versions, upstream Sunshine without the feature, Windows 10, external mice, and accessibility-denied/native-capture failure cases retain the existing mouse behavior.
+- The feature adds no measurable input-event loss, does not regress mouse/controller/touchscreen handling, and stays within the plan's 5% unaffected-scenario CPU, energy, and latency budget.
 
 Each feature needs telemetry that can be viewed locally, a kill switch, settings migration tests, accessibility review, localization updates, and independent rollback.
 
@@ -254,7 +287,7 @@ Each feature needs telemetry that can be viewed locally, a kill switch, settings
 
 Tasks:
 
-- Split CI into a thin native arm64 build/test job and a universal packaging job. Add a thin x86_64 compile job and a real Intel smoke test while Intel remains supported.
+- Use a native arm64 build/test job and an arm64-only packaging job. Reject a macOS artifact containing any non-arm64 Mach-O slice.
 - Make the arm64 job run tests, sanitizers, static analysis, and a short no-display or virtual-display smoke test.
 - Pin GitHub Actions by full commit SHA with a readable version comment; enable Dependabot or Renovate for actions, submodules, and any new manifest formats.
 - Cache only immutable inputs. Include dependency tag and checksum in cache keys.
@@ -272,7 +305,7 @@ Exit gate: the final DMG passes clean-machine install, launch, stream, quit, upd
 
 - Publish an internal or opt-in canary with symbols and a privacy-safe diagnostic bundle.
 - Test at minimum one first-generation Apple Silicon machine, the local M4, and another generation if available; cover both a MacBook and a desktop when possible.
-- Include Intel coverage while the universal build is supported.
+- Cover multiple Apple Silicon generations; Intel Mac execution is no longer a release gate.
 - Run 30-minute sessions for the core matrix and a longer 4-hour soak for the most demanding stable configuration.
 - Compare crash-free sessions, disconnects, input p95, frame-time variance, audio underruns, energy impact, and memory against the recorded baseline.
 - Freeze dependencies during the canary unless a blocking security fix is required.
@@ -287,7 +320,7 @@ Codex must account for every row. "Current" means the pin visible on 2026-08-14;
 |---|---|---|
 | Qt | 6.11.1 in macOS/Windows CI | Review all newer compatible patch releases, Qt Quick changes, macdeployqt behavior, deployment target, and known macOS fixes. |
 | FFmpeg | `moonlight-qt-deps` commit `d32b387f...`, branch `release/8.1` | Review VideoToolbox/Metal/AV1 changes and rebase the local Metal/VT patch. |
-| OpenSSL | commit `aae016bf...`, branch `openssl-3.6` | Update for security fixes, run tests for both slices, and verify disabled-feature assumptions. |
+| OpenSSL | commit `aae016bf...`, branch `openssl-3.6` | Update for security fixes, run arm64 tests, and verify disabled-feature assumptions. |
 | SDL | commit `147a8ee3...`, branch `release-3.4.x` | Review macOS HID, event loop, audio, Metal, controller, fullscreen, and power changes. |
 | sdl2-compat | commit `a53b6ad9...` | Verify every Moonlight SDL2 API used on macOS and compare behavior with native SDL3 where useful. |
 | SDL_ttf | commit `a883e490...`, SDL2 branch | Update with the compatibility layer and test overlay/text rendering. |
@@ -295,7 +328,7 @@ Codex must account for every row. "Current" means the pin visible on 2026-08-14;
 | dav1d | commit `54706fc6...` | Update and validate arm64 optimized paths plus software-decode fallback. |
 | libplacebo | commit `4d82c689...` | Rebase local patches, run tests, and measure Vulkan/MoltenVK fallback behavior. |
 | Vulkan-Headers | commit `2cd90f9d...` | Keep aligned with the selected Vulkan SDK and MoltenVK. |
-| Vulkan SDK/MoltenVK | 1.4.350.0 in dependency CI | Update as a matched set and validate universal archive contents. |
+| Vulkan SDK/MoltenVK | 1.4.350.0 in dependency CI | Update as a matched set and validate arm64-only archive contents. |
 | Opus | commit `ddbe4838...` | Run codec tests/benchmarks for arm64 and audio latency/quality integration tests. |
 | moonlight-common-c | app submodule commit `e41355ea...` | Update protocol/network code with its nested ENet and nanors dependencies; run protocol tests. |
 | ENet | nested commit `aca87840...` | Audit Apple socket handling, high-bitrate behavior, IPv6, loss, and reconnect paths. |
@@ -344,12 +377,14 @@ Recommended review units:
 7. Crypto/protocol/network dependency update.
 8. Qt/toolchain/CI action update.
 9. Confirmed input fixes.
-10. Confirmed Metal/VideoToolbox/frame-pacing fixes.
-11. Confirmed audio fixes.
-12. Confirmed networking/diagnostic fixes.
-13. HiDPI/color/HDR fixes.
-14. Feature changes, one feature per pull request.
-15. Packaging, signing, notarization, and release-hardening changes.
+10. Trackpad capability probe, trace fixtures, and `moonlight-common-c` protocol extension, disabled by default until a compatible host exists.
+11. Native Mac trackpad UI/input integration after the protocol contract and host implementation are independently reviewed.
+12. Confirmed Metal/VideoToolbox/frame-pacing fixes.
+13. Confirmed audio fixes.
+14. Confirmed networking/diagnostic fixes.
+15. HiDPI/color/HDR fixes.
+16. Other feature changes, one feature per pull request.
+17. Packaging, signing, notarization, and release-hardening changes.
 
 Each pull request must state its dependency bundle, baseline commit, hardware/OS, test matrix, before/after results, known limitations, and rollback method.
 
@@ -359,7 +394,7 @@ Each pull request must state its dependency bundle, baseline commit, hardware/OS
 
 - Apple M1 or M1 Pro, local M4, and one additional M-series generation when available.
 - Built-in Retina display and an external 4K/HDR display.
-- Native arm64 execution, universal app arm64 slice, and Intel `x86_64` execution.
+- Native arm64 execution on each available Apple Silicon generation.
 
 ### Stream scenarios
 
@@ -368,7 +403,8 @@ Each pull request must state its dependency bundle, baseline commit, hardware/OS
 - SDR, HDR10/EDR, full and limited range, 4:2:0 and supported 4:4:4.
 - V-Sync on/off, frame pacing on/off, windowed/borderless/fullscreen.
 - 10/30/50/100/150/250 Mbps, clean Ethernet, clean Wi-Fi, injected jitter/loss/reordering, and reconnect.
-- Mouse 125/500/1000 Hz, trackpad, keyboard shortcuts, controllers, touch, and high-resolution scroll.
+- Mouse 125/500/1000 Hz; built-in Mac trackpad in legacy-mouse and native-passthrough modes; keyboard shortcuts; controllers; direct touch; and high-resolution scroll.
+- For native trackpad passthrough: compatible Windows 11 Vibepollo/Sunshine host, unsupported host fallback, Windows 10 fallback, one through five contacts, focus loss, capture release, disconnect/reconnect, sleep/wake, and an external mouse used concurrently.
 - Built-in speaker, USB/HDMI, Bluetooth, stereo, 5.1, and 7.1 where hardware supports them.
 
 ### Measurements
@@ -393,9 +429,10 @@ Each pull request must state its dependency bundle, baseline commit, hardware/OS
 Stop and revert the active change if any of these occurs:
 
 - A dependency update cannot be tied to an immutable source commit or verified archive.
-- Either architecture slice is missing or links to a developer-machine path.
+- An arm64 slice is missing, any packaged Mach-O contains another architecture, or a binary links to a developer-machine path.
 - A shared change breaks another supported platform and cannot be isolated cleanly.
 - Input loss/order, stale-frame presentation, A/V drift, color correctness, crash rate, or energy regresses beyond the agreed tolerance.
+- Native trackpad mode produces duplicate mouse/touchpad input, stuck contacts, unbounded gesture state, or suppresses legacy mouse fallback after capability negotiation fails.
 - Signing/notarization requires broader entitlements than the reviewed feature needs.
 - Benchmark results are not reproducible or mix multiple uncontrolled variables.
 
@@ -412,7 +449,7 @@ Rollback order:
 The first executable milestone is Phase 0 plus the smallest part of Phase 1:
 
 1. Create the modernization status document and dependency-inventory generator.
-2. Download `v12` with integrity recorded, build native arm64 Debug/Release and universal Release, and validate the bundle structure without publishing it.
+2. Download `v12` with integrity recorded, build native arm64 Debug/Release, and validate the bundle structure without publishing it. The completed universal build remains historical evidence from before the 2026-08-17 support decision.
 3. Add only the non-invasive timing counters required to separate decode, render, GPU completion, present, input dispatch, and audio queue latency.
 4. Capture repeatable M4 baselines for 1080p60, 1440p120, and 4K60 on Ethernet using a fixed Sunshine host and fixed test content.
 5. Triage the ten issues in section 8 on current master and propose the first single-problem implementation branch.

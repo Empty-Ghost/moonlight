@@ -1,8 +1,12 @@
 # Mac Silicon modernization status
 
-Last updated: 2026-08-16
+Last updated: 2026-08-17
 Active phase: Phase 2 — dependency and toolchain modernization
-Phase state: **media candidate accepted locally; hosted CI and immutable publication remain gated**
+Phase state: **media and input/window candidates accepted locally; security/network/audio local build/test candidate complete; physical streaming, hosted CI, and immutable publication remain gated**
+
+## macOS architecture policy
+
+On 2026-08-17, the project explicitly dropped macOS x86_64 support. New macOS dependency archives, builds, CI artifacts, and release packages are arm64-only. Windows x64 and Linux x86_64 remain supported. Earlier universal and Rosetta results below are retained as dated historical evidence, not as current release gates; the universal `v12` dependency bundle remains available only for rollback.
 
 ## Ownership and scope
 
@@ -24,7 +28,7 @@ Phase state: **media candidate accepted locally; hosted CI and immutable publica
 - [x] Record local Qt/Xcode/SDK/Clang and build-tool versions.
 - [x] Build native arm64 Debug.
 - [x] Build native arm64 Release.
-- [x] Build universal Release with the official Qt 6.11.1 universal package.
+- [x] Build universal Release with the official Qt 6.11.1 universal package (historical pre-2026-08-17 evidence; no longer a gate).
 - [x] Define a machine-readable benchmark schema before accepting measurements.
 - [x] Capture and repeat a warm idle baseline within the stated noise bounds.
 - [x] Refresh and classify all ten issue rows (eleven issue IDs) in the plan.
@@ -72,7 +76,7 @@ Phase state: **media candidate accepted locally; hosted CI and immutable publica
 - [x] Clone the companion repository at `/Users/justin/Development/moonlight-qt-deps`, verify clean tag `v12` at `22355399`, and initialize its top-level pinned sources.
 - [x] Add `DEPENDENCY_POLICY.md` with baseline, rollback, required decision fields, review groups, and acceptance rules.
 - [x] Pin published `v12` macOS and Steam Link archive sizes and SHA-256 values in `setup-deps.py`.
-- [x] Make the Python installer reject unsafe archive paths and symlinks, bound archive expansion, validate required contents, verify macOS universal slices, and replace the installed bundle atomically.
+- [x] Make the Python installer reject unsafe archive paths and symlinks, bound archive expansion, validate required contents, require arm64, and replace the installed bundle atomically.
 - [x] Preserve an explicit `MOONLIGHT_DEPS_TAG=v12` developer rollback override; unknown/unreviewed tags fail closed.
 - [x] Add installer unit coverage for traversal, symlinks, digest failure preservation, and atomic replacement.
 - [x] Add an SPDX 2.3 source/bundle SBOM and generated third-party notices from the pinned inventory.
@@ -82,6 +86,7 @@ Phase state: **media candidate accepted locally; hosted CI and immutable publica
 - [x] Run Moonlight tests and matched before/after benchmarks against the media candidate.
 - [x] Correlate the exact media candidate against reviewed upstream/NVD advisories and the configured/shipped feature surface.
 - [x] Record user acceptance of the media candidate, including the matched-test caveats and conditional security result.
+- [x] Review and accept the input/window group: retain current SDL binaries, document the SDL_ttf exception, and advance the validated SDL GameControllerDB pin.
 - [ ] Publish an immutable dependency artifact and add its reviewed asset metadata; publication is not authorized by the current task.
 
 ### Phase 2 validation to date
@@ -98,6 +103,10 @@ Phase state: **media candidate accepted locally; hosted CI and immutable publica
 - Candidate audio-pending mean was +29.8% with a lower 80 ms maximum, and SDL queue mean was +5.9% with the same 55 ms maximum. Network/input samples were sparse, and candidate decoded-frame samples were 6.9% lower, so identical delivered-frame cadence is not proven.
 - The bounded security review found no known reachable advisory in the reviewed records. It is a conditional pass rather than a vulnerability-free assertion: FFmpeg's ledger lacks a 9.0 mapping, negative advisory searches are not proof of absence, and publication requires a fresh recheck. Details are in `MEDIA_SECURITY_REVIEW.md`.
 - The user accepted the media candidate on 2026-08-16 with the documented matched-test caveats and conditional security result. The `top` POWER metric remained zero and is unavailable for energy conclusions; sustained-session and privileged energy gates are explicitly deferred rather than passed. Hosted CI and immutable publication remain open. No application bundle tag or release asset was changed.
+- Input/window review: SDL 3.4.14 and sdl2-compat 2.32.70 already match the latest stable releases. SDL_ttf remains at `a883e490` because the four later SDL2-branch commits are unreleased packaging-only changes that do not affect the vendored CMake build. GameControllerDB advances 15 commits from `8d9fefd7` to `42f28e22`, including the upstream 8BitDo SN30 Pro macOS mapping fix.
+- SDL CTest passed 25/25 per slice and sdl2-compat CTest passed 13/13 per slice. SDL_ttf vendored builds and installed-package consumers passed for arm64 and x86_64, including Rosetta execution. Fresh universal SDL dylibs retained macOS 13.0, expected install names, and symbol sets identical to `v12` for both slices.
+- The candidate controller database passed its duplicate-key checker and the shipped SDL2 parser accepted 317 mappings. No physical controller was available, so changed-device behavior remains a peripheral gate and is not represented as passed. The bounded GitHub/NVD review found no known applicable advisory; this is conditional, not a vulnerability-free assertion. Details are in `INPUT_WINDOW_CANDIDATE.md`.
+- Moonlight rebuilt after the GameControllerDB pin change as native arm64 Release and official-Qt universal Release, regenerating the embedded resource. QtTest passed 13/13. The universal executable contains `x86_64 arm64`, targets macOS 13.0 for both slices, and returned 6.1.0 under native arm64 and Rosetta x86_64. A reused native bundle initially loaded duplicate stale/Homebrew Qt frameworks and aborted; the single-framework-path rerun passed, and that invalid first launch is not counted as an application failure.
 
 ## Baseline evidence
 
@@ -123,10 +132,10 @@ Phase state: **media candidate accepted locally; hosted CI and immutable publica
 ## Findings and risks
 
 1. Resolved in the Phase 2 foundation: `setup-deps.py` now verifies the reviewed v12 asset size and SHA-256 before safe extraction and atomic installation.
-2. The native Homebrew builds pass but cannot prove the macOS 13/14 release target because their Qt frameworks require macOS 26. The universal build with official Qt correctly records minimum macOS 13.
+2. The native Homebrew builds pass but cannot prove the macOS 13/14 release target because their Qt frameworks require macOS 26. Both the historical universal build and the current arm64-only build with official Qt correctly record minimum macOS 13.
 3. `macdeployqt` copies `PlugIns/sqldrivers/libqsqlmimer.dylib`, which links to missing `/usr/local/lib/libmimerapi.dylib`. The bundle therefore fails the “no developer-machine paths” release check even though Moonlight does not use that SQL plugin.
 4. `create-dmg` 8.0.0 is unpinned in CI. The local global installation currently fails to load its `macos-alias` native module under Node 26.7.0, so no DMG was claimed.
-5. The local app is unsigned. Hosted CI, Intel execution, signing, notarization, Gatekeeper, clean-machine behavior, and published artifacts remain separate gates.
+5. The local app is unsigned. Hosted CI, signing, notarization, Gatekeeper, clean-machine behavior, and published artifacts remain separate gates. Intel Mac execution is no longer a gate.
 6. A forced-offscreen automation attempt produced the supplied Qt platform-integration abort. It was a harness error, was excluded, and the corrected normal-Cocoa runs completed twice.
 
 ## Issue triage outcome
@@ -139,4 +148,4 @@ Phase 0 is **not closed**. Build, inventory, schema, issue-state refresh, and id
 
 Phase 1 is **complete as of 2026-08-16**. Native logic, renderer ownership, audio policy, input replay, performance counters, crash-context redaction, sanitizer configurations, static-analysis configuration, CodeQL configuration, and `moonlight-common-c` queue coverage are implemented. Local arm64 tests, ASan, UBSan, application build, CLI smoke, Sunshine connection, and Vulkan timing validation passed. The user explicitly waived the formal 30-minute soak. Hosted execution, publication commits, and extended session crash metadata remain clearly deferred and are not represented as passed.
 
-Phase 2 foundation work **started on 2026-08-16**. Installer integrity and extraction hardening, rollback selection, dependency policy, SBOM generation, and the companion-repository baseline are in place. The first media candidate passed local dual-architecture dependency builds/tests, native/universal Moonlight builds, matched 2560x1600 60 Hz streaming, and a bounded security correlation without an observed blocker. The user accepted it locally on 2026-08-16 with the documented caveats. Hosted CI and immutable `v13` publication remain open; watts and a sustained candidate session are explicitly unavailable/deferred and are not represented as passed.
+Phase 2 foundation work **started on 2026-08-16**. Installer integrity and extraction hardening, rollback selection, dependency policy, SBOM generation, and the companion-repository baseline are in place. The first media candidate passed the then-current dual-architecture dependency builds/tests, native/universal Moonlight builds, matched 2560x1600 60 Hz streaming, and a bounded security correlation without an observed blocker. The user accepted it locally on 2026-08-16 with the documented caveats. As of 2026-08-17, future validation and packaging are arm64-only. The security/network/audio group advances only Opus from 1.5.2 to 1.6.1; OpenSSL 3.6.3 and the reviewed network/protocol pins remain current. Arm64 Opus tests passed 5/5, moonlight-common-c passed 1/1, OpenSSL passed 3,944 tests across 353 files, the official-Qt arm64 application built and launched with candidate Opus, and all 105 deployed Mach-O files were arm64-only. Physical audio streaming, sustained candidate soak, hosted CI, and immutable `v13` publication remain open and are not represented as passed.

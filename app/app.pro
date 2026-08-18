@@ -1,6 +1,15 @@
 QT += core quick network quickcontrols2 svg
 CONFIG += c++17
 
+macx {
+    isEmpty(QMAKE_APPLE_DEVICE_ARCHS) {
+        QMAKE_APPLE_DEVICE_ARCHS = arm64
+    }
+    !equals(QMAKE_APPLE_DEVICE_ARCHS, arm64) {
+        error("Moonlight for macOS supports arm64 only")
+    }
+}
+
 GIT_COMMIT = $$system(git -C $$PWD/.. rev-parse --short=12 HEAD)
 DEFINES += APP_COMMIT=\\\"$$GIT_COMMIT\\\" DEPENDENCY_BUNDLE=\\\"v12\\\"
 

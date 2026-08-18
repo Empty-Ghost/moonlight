@@ -1,4 +1,14 @@
 TEMPLATE = subdirs
+
+macx {
+    isEmpty(QMAKE_APPLE_DEVICE_ARCHS) {
+        QMAKE_APPLE_DEVICE_ARCHS = arm64
+    }
+    !equals(QMAKE_APPLE_DEVICE_ARCHS, arm64) {
+        error("Moonlight for macOS supports arm64 only")
+    }
+}
+
 SUBDIRS = \
     moonlight-common-c \
     qmdnsengine \

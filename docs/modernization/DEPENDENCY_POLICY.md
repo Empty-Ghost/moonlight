@@ -20,7 +20,7 @@ Every dependency row in `dependencies.json` must acquire these fields before the
 - change class: security, patch, minor, major, or unversioned commit;
 - API and ABI notes, known CVEs, license and license-change result;
 - local patch disposition and upstream reference;
-- upstream tests run for arm64 and x86_64;
+- upstream tests run for arm64;
 - Moonlight build, test, benchmark, and packaging results;
 - decision, owner, risk, review date, and rollback pin.
 
@@ -31,7 +31,7 @@ An empty field means `not assessed`, never `no issue`. Unreleased commits requir
 | Order | Group | Components | Initial state |
 |---|---|---|---|
 | 1 | Media | FFmpeg, dav1d, libplacebo, Vulkan-Headers, Vulkan SDK/MoltenVK | Accepted locally on 2026-08-16 after dual-architecture dependency/app checks, matched streaming, and a conditional security pass. Power and sustained-session evidence are deferred; hosted CI and immutable publication remain open. See `MEDIA_CANDIDATE.md` and `MEDIA_SECURITY_REVIEW.md`. |
-| 2 | Input/window | SDL 3, sdl2-compat, SDL_ttf, SDL GameControllerDB | Candidate refresh not started. |
+| 2 | Input/window | SDL 3, sdl2-compat, SDL_ttf, SDL GameControllerDB | Accepted locally on 2026-08-16. SDL and sdl2-compat already match the latest stable releases; SDL_ttf remains pinned under a documented unversioned exception; GameControllerDB advances to `42f28e22`. Dual-architecture dependency tests and ABI checks passed. Physical-controller confirmation remains open. See `INPUT_WINDOW_CANDIDATE.md`. |
 | 3 | Security/network/audio | OpenSSL, Opus, moonlight-common-c, ENet, nanors, qmdnsengine, Discord RPC | Candidate refresh not started; Phase 1 common-c tests are preserved but not published. |
 | 4 | Application/toolchain | Qt, Xcode/SDK, Apple Clang, qmake, Python, CMake, Meson, Ninja, NASM, pkg-config, create-dmg, aqtinstall | Candidate refresh not started. |
 | 5 | CI supply chain | GitHub Actions, runner images, Homebrew packages, installer actions | Candidate refresh not started. |
@@ -42,8 +42,8 @@ Each group gets a separate dependency-repository branch and immutable artifact. 
 
 - Verify expected byte size and SHA-256 before extraction.
 - Reject absolute paths, parent traversal, backslash paths, symlinks, excessive entry counts, and excessive expanded size.
-- Validate required layout and universal `arm64`/`x86_64` slices before changing `libs/mac`.
+- Validate required layout and an arm64 slice before changing `libs/mac`. Additional slices in the rollback `v12` archive are tolerated, but new macOS archives and final application bundles must contain only arm64 Mach-O binaries.
 - Stage on the target filesystem and atomically replace only after all checks pass.
 - Preserve the prior install on download, verification, extraction, or validation failure.
 
-The installer unit tests cover traversal, symlink rejection, digest failure preservation, rollback after an injected swap failure, and successful atomic replacement. A real `v12` macOS download/install smoke test also verifies the published digest and universal SDL slice.
+The installer unit tests cover traversal, symlink rejection, digest failure preservation, rollback after an injected swap failure, and successful atomic replacement. A real `v12` macOS download/install smoke test also verifies the published digest and its arm64 SDL slice; its historical x86_64 slice is not required by the current policy.
